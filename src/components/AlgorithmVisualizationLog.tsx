@@ -34,6 +34,7 @@ export const AlgorithmVisualizationLog: React.FC<AlgorithmVisualizationLogProps>
   if (!isRunning && isSolution) statusLabel = 'Completed';
   else if (!isRunning && isFailure) statusLabel = 'No Solution';
   else if (!isRunning && currentStepIndex === 0) statusLabel = 'Ready';
+  else if (!isRunning && currentStepIndex > 0) statusLabel = 'Paused';
 
   // Status badge colors (inline, per state)
   const badgeBase: React.CSSProperties = {
@@ -51,18 +52,27 @@ export const AlgorithmVisualizationLog: React.FC<AlgorithmVisualizationLogProps>
     Running: { backgroundColor: '#d1fae5', color: '#065f46', borderColor: '#a7f3d0' },
     Completed: { backgroundColor: '#d1fae5', color: '#065f46', borderColor: '#a7f3d0' },
     'No Solution': { backgroundColor: '#fee2e2', color: '#991b1b', borderColor: '#fecaca' },
+    Paused: { backgroundColor: '#fef3c7', color: '#92400e', borderColor: '#fcd34d' },
   };
   const badgeStyle: React.CSSProperties = { ...badgeBase, ...(badgeStyles[statusLabel] ?? badgeStyles.Running) };
   const dotColor =
-    statusLabel === 'Ready' ? '#94a3b8' : statusLabel === 'No Solution' ? '#dc2626' : '#10b981';
+    statusLabel === 'Ready'
+      ? '#94a3b8'
+      : statusLabel === 'No Solution'
+        ? '#dc2626'
+        : statusLabel === 'Paused'
+          ? '#d97706'
+          : '#10b981';
 
   return (
-    <div className="app-card" style={{ height: '100%' }}>
+    <div className="app-card" style={{ height: '100%', backgroundColor: '#0d1117', border: '1px solid #30363d' }}>
       {/* Header */}
-      <div className="log-header-row">
+      <div className="log-header-row" style={{ backgroundColor: '#161b22', borderBottom: '1px solid #30363d' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <Code2 size={16} color="#2563eb" />
-          <h2 className="card-header-title">Algorithm Visualization</h2>
+          <Code2 size={16} color="#3fb950" />
+          <h2 className="card-header-title" style={{ color: '#3fb950', fontFamily: 'monospace' }}>
+            &gt;_ Algorithm Trace Log
+          </h2>
         </div>
 
         <span style={badgeStyle}>
@@ -80,21 +90,13 @@ export const AlgorithmVisualizationLog: React.FC<AlgorithmVisualizationLogProps>
       </div>
 
       {/* Log list */}
-      <div ref={containerRef} className="log-scroll-area">
+      <div ref={containerRef} className="log-scroll-area" style={{ backgroundColor: '#0d1117' }}>
         {visibleSteps.length === 0 && (
           <div
-            style={{
-              textAlign: 'center',
-              color: '#94a3b8',
-              padding: '40px 16px',
-              fontSize: '12px',
-              lineHeight: 1.6,
-            }}
+            style={{ textAlign: 'center', color: '#3fb950', padding: '40px 16px', fontSize: '12px', lineHeight: 1.6, fontFamily: 'monospace' }}
           >
-            <div style={{ fontSize: '24px', marginBottom: '8px' }}>⏳</div>
-            Press <strong>Start</strong> or <strong>Step by Step</strong>
-            <br />
-            to begin algorithm visualization.
+            <div style={{ fontSize: '20px', marginBottom: '8px', color: '#3fb950' }}>█</div>
+            <span>Awaiting command...<br/>Run <strong style={{ color: '#58a6ff' }}>START</strong> or <strong style={{ color: '#58a6ff' }}>STEP</strong> to execute.</span>
           </div>
         )}
         {visibleSteps.map((step, idx) => {
@@ -103,27 +105,49 @@ export const AlgorithmVisualizationLog: React.FC<AlgorithmVisualizationLogProps>
           const isConflict = step.type === 'CONFLICT_DETECTED';
           const isAssigned = step.type === 'SAFE_ASSIGNMENT' || step.type === 'SUCCESS';
 
-          let circleClass = 'step-circle-blue';
           let rowClass = 'log-item-row';
 
           if (isConflict) {
-            circleClass = 'step-circle-red';
             rowClass = 'log-item-row log-item-conflict';
-          } else if (isAssigned) {
-            circleClass = 'step-circle-green';
           }
 
           return (
-            <div key={`log-${stepNum}`} className={rowClass}>
+            <div
+              key={`log-${stepNum}`}
+              className={rowClass}
+              style={{
+                backgroundColor: isConflict ? 'rgba(248,81,73,0.08)' : 'transparent',
+                borderLeft: isConflict ? '3px solid #f85149' : isAssigned ? '3px solid #3fb950' : '3px solid #30363d',
+                fontFamily: 'monospace',
+                fontSize: '11px',
+                padding: '5px 10px',
+                margin: '2px 0',
+                borderRadius: '3px',
+              }}
+            >
               <div className="log-item-left">
-                <span className={`log-step-circle ${circleClass}`}>
-                  {stepNum}
+                <span style={{
+                  minWidth: '20px',
+                  height: '20px',
+                  borderRadius: '3px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  fontFamily: 'monospace',
+                  backgroundColor: isConflict ? '#6e1a1a' : isAssigned ? '#1a4731' : '#1c2128',
+                  color: isConflict ? '#f85149' : isAssigned ? '#3fb950' : '#8b949e',
+                  flexShrink: 0,
+                  marginRight: '8px',
+                }}>
+                  {String(stepNum).padStart(2, '0')}
                 </span>
-                <span style={{ fontSize: '11.5px', lineHeight: 1.25 }}>
-                  {step.description || `Step ${stepNum}: Processing candidate`}
+                <span style={{ fontSize: '11px', lineHeight: 1.4, color: isConflict ? '#f85149' : isAssigned ? '#3fb950' : '#8b949e', fontFamily: 'monospace' }}>
+                  {isConflict ? '⚡ ' : isAssigned ? '✓  ' : '→  '}{step.description || `Step ${stepNum}: Processing candidate`}
                 </span>
               </div>
-              <span className="log-time-text">{timestamp}</span>
+              <span style={{ fontSize: '10px', fontFamily: 'monospace', color: '#484f58', whiteSpace: 'nowrap', marginLeft: 'auto' }}>{timestamp}</span>
             </div>
           );
         })}

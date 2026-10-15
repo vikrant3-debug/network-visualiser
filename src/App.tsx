@@ -244,6 +244,14 @@ export function App() {
   const isSolution = status === 'SOLUTION_FOUND';
   const isRunning = status === 'RUNNING';
 
+  const healthScore = useMemo(() => {
+    if (status === 'SOLUTION_FOUND') return 100;
+    if (status === 'NO_SOLUTION') return 0;
+    if (!currentStep) return 0;
+    const assigned = Object.values(currentAssignments).filter(v => v !== null).length;
+    return Math.round((assigned / nodes.length) * 90); // max 90% while running
+  }, [status, currentStep, currentAssignments, nodes.length]);
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#edf2f9' }}>
       {/* 1. Header Bar */}
@@ -253,6 +261,10 @@ export function App() {
             setShowTheoryModal(true);
           }
         }}
+        healthScore={healthScore}
+        apCount={nodes.length}
+        edgeCount={edges.length}
+        statusLabel={status}
       />
 
       {/* 2. Main Container with Grid Structure */}
@@ -303,6 +315,8 @@ export function App() {
             conflictingEdgeId={conflictingEdgeId}
             conflictingVertexId={conflictingVertexId}
             isSolution={isSolution}
+            availableChannels={availableChannels}
+            presetId={selectedPresetId}
             onNodeMove={handleNodeMove}
           />
 

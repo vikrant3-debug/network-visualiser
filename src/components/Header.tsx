@@ -3,9 +3,19 @@ import { Wifi, Home, Code, Grid, Eye, Info } from 'lucide-react';
 
 interface HeaderProps {
   onNavClick?: (target: string) => void;
+  healthScore: number;      // 0 to 100
+  apCount: number;
+  edgeCount: number;
+  statusLabel: string;      // 'IDLE' | 'RUNNING' | 'SOLUTION_FOUND' | 'NO_SOLUTION'
 }
 
-export const Header: React.FC<HeaderProps> = ({ onNavClick }) => {
+export const Header: React.FC<HeaderProps> = ({
+  onNavClick,
+  healthScore,
+  apCount,
+  edgeCount,
+  statusLabel,
+}) => {
   return (
     <header className="app-header">
       <div className="header-inner">
@@ -61,6 +71,50 @@ export const Header: React.FC<HeaderProps> = ({ onNavClick }) => {
             <span>About</span>
           </button>
         </nav>
+
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '20px',
+          marginLeft: '24px',
+          paddingLeft: '24px',
+          borderLeft: '1px solid #30363d',
+        }}>
+          {/* 3 quick stat chips */}
+          <div style={{ display: 'flex', gap: '12px', fontSize: '11px' }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontWeight: 800, fontSize: '16px', color: '#58a6ff', fontFamily: 'monospace' }}>{apCount}</div>
+              <div style={{ color: '#8b949e' }}>APs</div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontWeight: 800, fontSize: '16px', color: '#f78166', fontFamily: 'monospace' }}>{edgeCount}</div>
+              <div style={{ color: '#8b949e' }}>Links</div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontWeight: 800, fontSize: '16px', fontFamily: 'monospace', color: healthScore === 100 ? '#3fb950' : healthScore > 0 ? '#d29922' : '#8b949e' }}>
+                {healthScore}%
+              </div>
+              <div style={{ color: '#8b949e' }}>Health</div>
+            </div>
+          </div>
+
+          {/* Health bar */}
+          <div style={{ width: '120px' }}>
+            <div style={{ fontSize: '10px', color: '#8b949e', marginBottom: '4px', display: 'flex', justifyContent: 'space-between' }}>
+              <span>Network Health</span>
+              <span style={{ color: healthScore === 100 ? '#3fb950' : '#d29922' }}>{statusLabel === 'SOLUTION_FOUND' ? 'OPTIMAL' : statusLabel === 'NO_SOLUTION' ? 'FAILED' : statusLabel === 'RUNNING' ? 'COMPUTING' : 'IDLE'}</span>
+            </div>
+            <div style={{ height: '6px', backgroundColor: '#21262d', borderRadius: '9999px', overflow: 'hidden' }}>
+              <div style={{
+                height: '100%',
+                width: `${healthScore}%`,
+                borderRadius: '9999px',
+                backgroundColor: healthScore === 100 ? '#3fb950' : healthScore > 50 ? '#d29922' : '#f78166',
+                transition: 'width 0.4s ease, background-color 0.4s ease',
+              }} />
+            </div>
+          </div>
+        </div>
       </div>
     </header>
   );
